@@ -46,15 +46,16 @@ dense4 = tflearn.fully_connected(dense3, 16, activation='tanh',
 #sdropout4 = tflearn.dropout(dense4, 0.8)
 dense5 = tflearn.fully_connected(dense4, 16, activation='tanh',
                                  regularizer='L2')
-softmax = tflearn.fully_connected(dense5, 1, activation='softmax')
+output_layer = tflearn.fully_connected(dense5, 1, activation='linear')
 
 # Regression using SGD with learning rate decay
-sgd = tflearn.SGD(learning_rate=0.1, lr_decay=0.96, decay_step=1000)
+sgd = tflearn.SGD(learning_rate=0.001, lr_decay=0.96, decay_step=1000)
 
-net = tflearn.regression(softmax, optimizer=sgd, loss='mean_square')
+net = tflearn.regression(output_layer, optimizer=sgd, loss='mean_square')
 
 # Training
 model = tflearn.DNN(net, tensorboard_verbose=3)
 
 model.fit(trainX, trainY, n_epoch=1000, validation_set=(testX, testY),
           show_metric=True, run_id="dense_model")
+
