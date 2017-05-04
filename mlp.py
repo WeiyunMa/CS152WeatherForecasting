@@ -1,6 +1,7 @@
 import tflearn
 import pandas as pd
 import numpy as np
+from matplotlib import pyplot as plt
 
 def load_data(path, training_size):
 	weather_data = pd.read_csv(path, sep='\t')
@@ -17,45 +18,45 @@ def load_data(path, training_size):
 		yesterday = row['2009']
 	X = np.array(X)
 	Y = np.array(Y)
-	trainX, trainY = X[:training_size], Y[:training_size]
-	testX, testY = X[training_size:], Y[training_size:]
-	# print(trainX.shape, trainY.shape, testX.shape, testY.shape)
-	# print(trainX[0])
-	# print(trainY[0])
-	return trainX, trainY, testX, testY
+	return X, Y
 
 # Data loading and preprocessing
-trainX, trainY, testX, testY = load_data("data/max_temp.csv", training_size=300)
+X, Y = load_data("data/max_temp.csv", training_size=365)
 
-trainX = trainX + trainX
-trainY = trainY + trainY
+activation_func = 'leaky_relu'
 
 # Building deep neural network
 input_layer = tflearn.input_data(shape=[None, 11])
-dense1 = tflearn.fully_connected(input_layer, 16, activation='tanh',
+dense1 = tflearn.fully_connected(input_layer, 32, activation=activation_func,
                                  regularizer='L2')
-#dropout1 = tflearn.dropout(dense1, 0.8)
-dense2 = tflearn.fully_connected(dense1, 16, activation='tanh',
+dense2 = tflearn.fully_connected(dense1, 32, activation=activation_func,
                                  regularizer='L2')
-#dropout2 = tflearn.dropout(dense2, 0.8)
-dense3 = tflearn.fully_connected(dense2, 16, activation='tanh',
+dense3 = tflearn.fully_connected(dense2, 32, activation=activation_func,
                                  regularizer='L2')
-#dropout3 = tflearn.dropout(dense3, 0.8)
-dense4 = tflearn.fully_connected(dense3, 16, activation='tanh',
+dense4 = tflearn.fully_connected(dense3, 32, activation=activation_func,
                                  regularizer='L2')
-#sdropout4 = tflearn.dropout(dense4, 0.8)
-dense5 = tflearn.fully_connected(dense4, 16, activation='tanh',
+dense5 = tflearn.fully_connected(dense4, 32, activation=activation_func,
                                  regularizer='L2')
 output_layer = tflearn.fully_connected(dense5, 1, activation='linear')
 
-# Regression using SGD with learning rate decay
-sgd = tflearn.SGD(learning_rate=0.001, lr_decay=0.96, decay_step=1000)
+# Regression using SGD + momentum with learning rate decay
+sgd = tflearn.Momentum(learning_rate=0.001, lr_decay=0.96, decay_step=200)
 
-net = tflearn.regression(output_layer, optimizer=sgd, loss='mean_square')
+net = tflearn.regression(output_layer, optimizer=sgd, loss='mean_square', metric='R2')
 
 # Training
-model = tflearn.DNN(net, tensorboard_verbose=3)
+model = tflearn.DNN(net, tensorboard_verbose=0)
 
-model.fit(trainX, trainY, n_epoch=1000, validation_set=(testX, testY),
+model.fit(X, Y, n_epoch=1000, validation_set=0.2,
           show_metric=True, run_id="dense_model")
 
+predictY = model.predict(X)
+
+# Plot the results
+steps_in_future = 1
+plt.figure()
+plt.title('Prediction of Max Temperature (degrees Celsius)')
+plt.plot(Y, 'r-', label='Actual')
+plt.plot(predictY, 'g-', label='Predicted')
+plt.legend()
+plt.show()

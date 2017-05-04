@@ -38,4 +38,4 @@ weather_frame = pd.DataFrame(
     }
 )
 
-weather_frame.to_csv("data/max_temp.csv", sep='\t')
+weather_frame.to_csv("data/mean_temp.csv", sep='\t')
